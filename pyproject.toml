@@ -12,6 +12,8 @@ dependencies = [
     "matplotlib",
     "psutil",
     "polars",
+    "pip>=25.0.1",
+    "requests>=2.32.4",
 ]
 
 [project.scripts]
