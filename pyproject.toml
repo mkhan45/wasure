@@ -2,3 +2,15 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "wasure"
+description = "WebAssembly SUite for Runtime Evaluation"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "matplotlib",
+    "psutil",
+]
+
+[project.scripts]
+wasure = "wasure.wasure:main"
