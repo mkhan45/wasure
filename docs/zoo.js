@@ -33,12 +33,21 @@ function getEngineScores(table) {
 
 export function buildTables(csvContent) {
   const raw = readCsvData(csvContent);
+  const failed = raw.filter(d => d.return_code !== 0);
+  const runs = raw
+    .filter(d => d.elapsed_time_ns !== 0 && d.return_code === 0)
+    .select(aq.not("return_code"));
   const preprocessed = preprocessData(raw);
   const benchmarks = addBenchmarkScores(preprocessed);
   const engineScores = getEngineScores(benchmarks);
 
   const engines = engineScores.array("engine");
   const benchmarkNames = [...new Set(benchmarks.array("benchmark"))].sort();
+  const meta = {
+    numEngines: engines.length,
+    numBenchmarks: benchmarkNames.length,
+    numRuns: runs.numRows()
+  };
 
   // Pivot: engine x benchmark scores + total_score
   const scoresPivot = benchmarks
@@ -64,5 +73,5 @@ export function buildTables(csvContent) {
     .join(engineRuntimes, "engine")
     .select("engine", ...benchmarkNames, "total_runtime");
 
-  return { raw, benchmarks, engines, engineScores, scores: scoresByBenchmark, runtimes: runtimesByBenchmark };
+  return { raw, runs, failed, benchmarks, engines, benchmarkNames, engineScores, scores: scoresByBenchmark, runtimes: runtimesByBenchmark, meta };
 }
