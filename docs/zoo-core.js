@@ -8,7 +8,11 @@ export function createZoo(aq, op) {
       .select(aq.not("run_index", "score"))
       .filter((d) => d.elapsed_time_ns !== 0 && d.return_code === 0)
       .select(aq.not("return_code"))
-      .filter(d => d.engine != 'wasmedge-aot'); // XXX: wasmedge-aot had sketchy data
+      .filter(d => d.engine !== 'wasmedge-aot') // XXX: wasmedge-aot had sketchy data
+      // XXX: AOT engines should probably have their own category,
+      // and e.g. wizard spc should probably be aot
+      .filter(d => d.engine !== 'wasmtime-aot')
+      .filter(d => d.engine !== 'wasmer-aot');
   }
 
   function addBenchmarkScores(table) {
