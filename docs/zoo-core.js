@@ -1,6 +1,6 @@
 export function createZoo(aq, op) {
   function readCsvData(csvContent) {
-    return aq.fromCSV(csvContent).rename({ benchmark: "engine", runtime: "benchmark" });
+    return aq.fromCSV(csvContent).rename({ runtime: "engine" });
   }
 
   function preprocessData(table) {
