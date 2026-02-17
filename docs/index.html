@@ -48,7 +48,8 @@
         font-size: 14px !important; font-family: inherit !important; }
     #output th { font-weight: 500 !important; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.08em;
         font-size: 11px !important; padding: 14px 12px !important; background: var(--bg-thead) !important;
-        color: var(--text-primary) !important; position: sticky; top: 0; z-index: 5; border-bottom: 0 !important; }
+        color: var(--text-primary) !important; position: sticky; top: 0; z-index: 5; border-bottom: 0 !important;
+        cursor: pointer; }
     #output th::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0;
         height: 1px; background: var(--border-muted); pointer-events: none; }
     #output tr:nth-child(odd) td { background-color: var(--bg-row-odd) !important; }
@@ -56,10 +57,6 @@
     #output tr:hover td { background-color: var(--bg-hover) !important; }
     #output td:first-child { font-weight: 600 !important; color: var(--text-accent) !important; }
     #output td:not(:first-child) { text-align: right !important; color: var(--text-numeric) !important; }
-    #output th:nth-child(2) { background: var(--bg-sorted) !important; }
-    #output th:nth-child(2)::before { background: var(--text-accent) !important; height: 2px; }
-    #output th:nth-child(2)::after { content: ' ▼'; font-size: 10px; color: var(--text-accent); }
-    #output td:nth-child(2) { background-color: var(--bg-sorted) !important; }
     .error { color: var(--text-red); background: #fee; border: 1px solid var(--text-red);
         padding: 10px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; }
     .loading { color: var(--text-muted); font-style: italic; }
@@ -114,6 +111,36 @@
     window.aq = aq;
     window.op = aq.op;
     let tables = null;
+    let lastResult = null;
+    let sortCol = 1;
+    let sortDesc = true;
+
+    function renderSorted() {
+      if (!lastResult) return;
+      const output = document.getElementById("output");
+      const cols = lastResult.columnNames();
+      const col = cols[sortCol];
+      const sorted = sortDesc ? lastResult.orderby(aq.desc(col)) : lastResult.orderby(col);
+      output.innerHTML = sorted.toHTML();
+
+      const n = sortCol + 1;
+      const arrow = sortDesc ? '▼' : '▲';
+      let s = document.getElementById("sort-style");
+      if (!s) { s = document.createElement("style"); s.id = "sort-style"; document.head.appendChild(s); }
+      s.textContent =
+        `#output th:nth-child(${n}){background:var(--bg-sorted)!important}` +
+        `#output th:nth-child(${n})::before{background:var(--text-accent)!important;height:2px}` +
+        `#output th:nth-child(${n})::after{content:' ${arrow}';font-size:10px;color:var(--text-accent)}` +
+        `#output td:nth-child(${n}){background-color:var(--bg-sorted)!important}`;
+
+      output.querySelectorAll("th").forEach((th, i) => {
+        th.onclick = () => {
+          if (sortCol === i) sortDesc = !sortDesc;
+          else { sortCol = i; sortDesc = true; }
+          renderSorted();
+        };
+      });
+    }
 
     function runQuery() {
       const output = document.getElementById("output");
@@ -124,13 +151,19 @@
         const result = query(tables);
 
         if (result && typeof result.toHTML === "function") {
-          output.innerHTML = result.toHTML();
+          lastResult = result;
+          sortCol = 1;
+          sortDesc = true;
+          renderSorted();
         } else if (result !== undefined) {
+          lastResult = null;
           output.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
         } else {
+          lastResult = null;
           output.innerHTML = "<em>No result returned</em>";
         }
       } catch (e) {
+        lastResult = null;
         output.innerHTML = `<div class="error">${e.name}: ${e.message}</div>`;
       }
     }
